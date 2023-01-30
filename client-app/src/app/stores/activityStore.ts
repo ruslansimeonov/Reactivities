@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { makeAutoObservable, runInAction } from "mobx";
 import { v4 as uuid } from 'uuid';
 import agent from "../api/agent";
@@ -16,7 +17,7 @@ export default class ActivityStore {
 
     get activitiesByDate() {
         return Array.from(this.activityRegistry.values()).sort((a, b) =>
-            Date.parse(a.date) - Date.parse(b.date))
+            a.date!.getTime() - b.date!.getTime())
     }
 
     /**
@@ -30,7 +31,7 @@ export default class ActivityStore {
     get groupedActivities() {
         return Object.entries(
             this.activitiesByDate.reduce((activities, activity) => {
-                const date = activity.date; //         activity.date = activity.date.split('T')[0];
+                const date = format(activity.date!, 'dd MMM yyyy') //         activity.date = activity.date.split('T')[0];
                 activities[date] = activities[date] ? [...activities[date], activity] : [activity];
                 return activities
             }, {} as { [key: string]: Activity[] })
@@ -83,7 +84,7 @@ export default class ActivityStore {
         }
     }
     private setActivity = (activity: Activity) => {
-        activity.date = activity.date.split('T')[0];
+        activity.date = new Date(activity.date!);
         this.activityRegistry.set(activity.id, activity);
     }
 
@@ -97,7 +98,6 @@ export default class ActivityStore {
     createActivity = async (activity: Activity) => {
         this.loading = true;
         activity.id = uuid();
-
         try {
             await agent.Activities.create(activity);
             runInAction(() => {
@@ -108,27 +108,22 @@ export default class ActivityStore {
             })
         } catch (error) {
             console.log(error);
-            runInAction(() => {
-                this.loading = false;
-            })
+            runInAction(() => this.loading = false);
         }
     }
-
     updateActivity = async (activity: Activity) => {
         this.loading = true;
         try {
-            await agent.Activities.update(activity);
-            runInAction((() => {
-                this.activityRegistry.set(activity.id, activity)
+            await agent.Activities.update(activity)
+            runInAction(() => {
+                this.activityRegistry.set(activity.id, activity);
                 this.selectedActivity = activity;
                 this.editMode = false;
                 this.loading = false;
-            }))
+            })
         } catch (error) {
             console.log(error);
-            runInAction(() => {
-                this.loading = false;
-            })
+            runInAction(() => this.loading = false);
         }
     }
 

@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import { RouterProvider } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.min.css';
 import 'semantic-ui-css/semantic.min.css';
-
+import 'react-datepicker/dist/react-datepicker.css'
 import './app/layout/styles.css';
 import { router } from './app/router/Routes';
 import { store, StoreContext } from './app/stores/store';
